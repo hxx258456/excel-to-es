@@ -6,6 +6,7 @@ import (
 	"github.com/xuri/excelize/v2"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var (
@@ -124,7 +125,7 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 		panic(err)
 	}
 
-	bulk = esCli.Bulk().Index(School{}.Index()).Refresh("true")
+	bulk = esCli.Bulk().Index(School{}.Index()).Retrier(elastic.NewBackoffRetrier(elastic.NewConstantBackoff(time.Second * 5))).Refresh("true")
 	for k, v := range rows {
 		if k == 0 {
 			continue
@@ -162,6 +163,7 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 		bulk.Add(req)
 		pool.Put(doc)
 	}
+
 	res, err := bulk.Do(ctx)
 	if err != nil {
 		panic(err)
