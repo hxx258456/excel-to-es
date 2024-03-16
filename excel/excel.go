@@ -4,12 +4,20 @@ import (
 	"context"
 	"github.com/olivere/elastic/v7"
 	"github.com/xuri/excelize/v2"
-	"log"
 	"strconv"
+	"sync"
+)
+
+var (
+	pool = sync.Pool{
+		New: func() any {
+			return &School{}
+		},
+	}
+	bulk *elastic.BulkService
 )
 
 type School struct {
-	ID             int     `json:"id"`              // es id
 	Code           string  `json:"code"`            //编码
 	Name           string  `json:"name"`            //名字
 	Province       string  `json:"province"`        //省份
@@ -39,7 +47,13 @@ func (School) Mapping() string {
       "name": {
         "type": "text",
         "analyzer": "ik_max_word",
-        "search_analyzer": "ik_max_word"
+        "search_analyzer": "ik_max_word",
+		"fields": {
+			"keyword": {
+				"type": "keyword",
+				"ignore_above": 256
+			}
+		}
       },
       "province": {
         "type": "keyword"
@@ -90,6 +104,7 @@ func (School) Mapping() string {
 }
 
 func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
+
 	exists, err := esCli.IndexExists(School{}.Index()).Do(ctx)
 	if err != nil {
 		panic(err)
@@ -100,7 +115,6 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 			panic(err)
 		}
 	}
-	log.Println(exists)
 	file, err := excelize.OpenFile(filepath)
 	if err != nil {
 		panic(err)
@@ -109,6 +123,8 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
+
+	bulk = esCli.Bulk().Index(School{}.Index()).Refresh("true")
 	for k, v := range rows {
 		if k == 0 {
 			continue
@@ -125,8 +141,9 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 		if err != nil {
 			panic(err)
 		}
-		doc := &School{
-			ID:             k,
+		obj := pool.Get()
+		doc := obj.(*School)
+		doc = &School{
 			Code:           v[0],
 			Name:           v[1],
 			Province:       v[2],
@@ -140,26 +157,16 @@ func ReadExcel(esCli *elastic.Client, filepath string, ctx context.Context) {
 			Heat:           heat,
 			Description:    v[11],
 		}
-		query := elastic.NewTermQuery("code", doc.Code)
-		result, err := esCli.Search(doc.Index()).Query(query).Do(ctx)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if result.TotalHits() <= 0 {
-			_, err := esCli.Index().Index(doc.Index()).BodyJson(doc).Do(ctx)
-			if err != nil {
-				log.Println(err)
-				//continue
-			}
-		} else {
-			log.Println("更新", result.Hits.Hits[0].Id)
-			_, err := esCli.Update().Index(doc.Index()).Id(result.Hits.Hits[0].Id).Doc(doc).Do(ctx)
-			if err != nil {
-				log.Println(err)
-				//continue
-			}
-		}
-		esCli.Flush()
+
+		req := elastic.NewBulkUpdateRequest().Id(doc.Code).Doc(doc).Upsert(doc)
+		bulk.Add(req)
+		pool.Put(doc)
+	}
+	res, err := bulk.Do(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if len(res.Failed()) > 0 {
+		panic(res.Failed()[0].Error.Reason + res.Failed()[0].Id)
 	}
 }

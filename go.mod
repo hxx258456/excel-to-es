@@ -4,6 +4,7 @@ go 1.21.4
 
 require (
 	github.com/olivere/elastic/v7 v7.0.32
+	github.com/panjf2000/ants/v2 v2.9.0
 	github.com/xuri/excelize/v2 v2.8.1
 )
 
