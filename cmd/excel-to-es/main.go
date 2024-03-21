@@ -35,15 +35,31 @@ var (
 				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.Position{}, context.Background()); err != nil {
 					return err
 				}
+			case "university_score_line":
+				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.UniversityScoreLine{}, context.Background()); err != nil {
+					return err
+				}
+			case "batch_line":
+				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.BatchLine{}, context.Background()); err != nil {
+					return err
+				}
+			case "early_batch":
+				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.EarlyBatch{}, context.Background()); err != nil {
+					return err
+				}
+			case "zk_major":
+				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.ZKMajor{}, context.Background()); err != nil {
+					return err
+				}
+			case "bk_major":
+				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.BKMajor{}, context.Background()); err != nil {
+					return err
+				}
 			default:
 				return nil
 			}
 			return nil
 		},
-
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
-		// Run: func(cmd *cobra.Command, args []string) { },
 	}
 )
 

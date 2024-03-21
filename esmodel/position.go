@@ -75,7 +75,7 @@ func (Position) GenDoc(k int, v []string) (transfor.Indexer, error) {
 	if k == 0 {
 		return nil, errors.New("invalid k")
 	}
-	province_code, err := strconv.Atoi(v[0])
+	provinceCode, err := strconv.Atoi(v[0])
 	if err != nil {
 		return nil, err
 	}
@@ -85,41 +85,41 @@ func (Position) GenDoc(k int, v []string) (transfor.Indexer, error) {
 	}
 
 	// 分数区间
-	score_range_low, err := strconv.Atoi(v[5])
+	scoreRangeLow, err := strconv.Atoi(v[5])
 	if err != nil {
 		return nil, err
 	}
-	score_range_high, err := strconv.Atoi(v[6])
+	scoreRangeHigh, err := strconv.Atoi(v[6])
 	if err != nil {
 		return nil, err
 	}
 
 	// 位次区间
-	position_range_high, err := strconv.Atoi(v[7])
+	positionRangeHigh, err := strconv.Atoi(v[7])
 	if err != nil {
 		return nil, err
 	}
-	position_range_low, err := strconv.Atoi(v[8])
+	positionRangeLow, err := strconv.Atoi(v[8])
 	if err != nil {
 		return nil, err
 	}
 
-	same_count, err := strconv.Atoi(v[9])
+	sameCount, err := strconv.Atoi(v[9])
 	if err != nil {
 		return nil, err
 	}
 	return &Position{
 		Id:                k,
-		ProvinceCode:      province_code,
+		ProvinceCode:      provinceCode,
 		Province:          v[1],
 		Year:              year,
 		Subjects:          v[3],
 		Batch:             v[4],
-		ScoreRangeLow:     score_range_low,
-		ScoreRangeHigh:    score_range_high,
-		PositionRangeHigh: position_range_high,
-		PositionRangeLow:  position_range_low,
-		SameNumber:        same_count,
+		ScoreRangeLow:     scoreRangeLow,
+		ScoreRangeHigh:    scoreRangeHigh,
+		PositionRangeHigh: positionRangeHigh,
+		PositionRangeLow:  positionRangeLow,
+		SameNumber:        sameCount,
 	}, nil
 }
 

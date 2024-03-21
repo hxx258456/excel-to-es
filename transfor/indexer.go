@@ -17,7 +17,7 @@ type Indexer interface {
 	GetId() string
 }
 
-func ReadExcel(esCli *elastic.Client, filepath string, docType Indexer, ctx context.Context) error {
+func ReadExcel[T Indexer](esCli *elastic.Client, filepath string, docType T, ctx context.Context) error {
 	exists, err := esCli.IndexExists(docType.Index()).Do(ctx)
 	if err != nil {
 		return err
@@ -32,6 +32,7 @@ func ReadExcel(esCli *elastic.Client, filepath string, docType Indexer, ctx cont
 	if err != nil {
 		return err
 	}
+
 	rows, err := file.GetRows("Sheet1")
 	if err != nil {
 		return err
