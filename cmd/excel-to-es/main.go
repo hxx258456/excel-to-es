@@ -4,11 +4,10 @@ import (
 	"context"
 	"excel-to-es/esmodel"
 	"excel-to-es/transfor"
+	"github.com/spf13/cobra"
+	_ "go.uber.org/automaxprocs"
 	"log"
 	"os"
-
-	"github.com/olivere/elastic/v7"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -17,42 +16,40 @@ var (
 	flagEsPassword string
 	flagFilePath   string
 	flagType       string
-	rootCmd        = &cobra.Command{
+	flagChunkSize  int
+
+	rootCmd = &cobra.Command{
 		Use:   "excel-to-es",
 		Short: "excel数据转存elasticsearch工具",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			escli, err := elastic.NewClient(elastic.SetURL(flagEsUrl), elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetSniff(false))
-			if err != nil {
-				return err
-			}
 			switch flagType {
 			case "university":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.University{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.University{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "position":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.Position{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.Position{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "university_score_line":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.UniversityScoreLine{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.UniversityScoreLine{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "batch_line":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.BatchLine{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.BatchLine{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "early_batch":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.EarlyBatch{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.EarlyBatch{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "zk_major":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.ZKMajor{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.ZKMajor{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "bk_major":
-				if err := transfor.ReadExcel(escli, flagFilePath, esmodel.BKMajor{}, context.Background()); err != nil {
+				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.BKMajor{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			default:
@@ -76,17 +73,29 @@ func main() {
 
 func init() {
 	rootCmd.Flags().StringVarP(&flagEsUrl, "addr", "a", "http://0.0.0.0:9200", "elasticsearch url")
-	rootCmd.MarkFlagRequired("url")
+	if err := rootCmd.MarkFlagRequired("addr"); err != nil {
+		panic(err)
+	}
 
 	rootCmd.Flags().StringVarP(&flagEsUser, "user", "u", "elastic", "elasticsearch username")
-	rootCmd.MarkFlagRequired("user")
+	if err := rootCmd.MarkFlagRequired("user"); err != nil {
+		panic(err)
+	}
 
 	rootCmd.Flags().StringVarP(&flagEsPassword, "password", "p", "elastic", "elasticsearch user password")
-	rootCmd.MarkFlagRequired("password")
+	if err := rootCmd.MarkFlagRequired("password"); err != nil {
+		panic(err)
+	}
 
 	rootCmd.Flags().StringVarP(&flagType, "type", "t", "university", "excel文件解析所用模型")
-	rootCmd.MarkFlagRequired("type")
+	if err := rootCmd.MarkFlagRequired("type"); err != nil {
+		panic(err)
+	}
 
 	rootCmd.Flags().StringVarP(&flagFilePath, "filepath", "f", "../../testdata/院校(1).xlsx", "需要导入的excel文件路径")
-	rootCmd.MarkFlagRequired("filepath")
+	if err := rootCmd.MarkFlagRequired("filepath"); err != nil {
+		panic(err)
+	}
+
+	rootCmd.Flags().IntVarP(&flagChunkSize, "chunk", "c", 500, "文件切片大小")
 }

@@ -2,12 +2,15 @@ package transfor
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"time"
-
+	"excel-to-es/reader"
 	"github.com/olivere/elastic/v7"
+	"github.com/panjf2000/ants/v2"
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/exp/mmap"
+	"log"
+	"runtime"
+	"sync"
+	"time"
 )
 
 type Indexer interface {
@@ -17,7 +20,60 @@ type Indexer interface {
 	GetId() string
 }
 
-func ReadExcel[T Indexer](esCli *elastic.Client, filepath string, docType T, ctx context.Context) error {
+type TaskParams[T Indexer] struct {
+	esUrl      string
+	esUser     string
+	esPassword string
+	docType    T
+	rows       [][]string
+	chunkStart int
+}
+
+func ReadExcel[T Indexer](esUrl, esUser, esPassword string, filepath string, docType T, chunkSize int, ctx context.Context) error {
+	wg := &sync.WaitGroup{}
+	pool, err := ants.NewPoolWithFunc(runtime.NumCPU(), func(i interface{}) {
+
+		defer wg.Done()
+		param := i.(*TaskParams[T])
+		esCli, err := elastic.NewClient(elastic.SetBasicAuth(param.esUser, param.esPassword), elastic.SetURL(param.esUrl), elastic.SetSniff(false))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		bulk := esCli.Bulk().Index(param.docType.Index()).Retrier(elastic.NewBackoffRetrier(elastic.NewConstantBackoff(time.Second * 5))).Refresh("true")
+
+		for k, v := range param.rows {
+			if k == 0 {
+				continue
+			}
+			v := v
+			log.Println(k + param.chunkStart)
+			doc, err := param.docType.GenDoc(k+param.chunkStart, v)
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			req := elastic.NewBulkUpdateRequest().Id(doc.GetId()).Doc(doc).Upsert(doc)
+			bulk.Add(req)
+		}
+		res, err := bulk.Do(ctx)
+		if err != nil {
+			log.Println(err)
+		}
+		if len(res.Failed()) > 0 {
+			for _, v := range res.Failed() {
+				log.Println(v.Error.Reason, v.Id, v.Result)
+			}
+		}
+	}, ants.WithPreAlloc(true))
+	if err != nil {
+		return err
+	}
+	defer pool.Release()
+	esCli, err := elastic.NewClient(elastic.SetURL(esUrl), elastic.SetBasicAuth(esUser, esPassword), elastic.SetSniff(false))
+	if err != nil {
+		return err
+	}
 	exists, err := esCli.IndexExists(docType.Index()).Do(ctx)
 	if err != nil {
 		return err
@@ -28,16 +84,20 @@ func ReadExcel[T Indexer](esCli *elastic.Client, filepath string, docType T, ctx
 			return err
 		}
 	}
-	file, err := excelize.OpenFile(filepath)
+	readAt, err := mmap.Open(filepath)
 	if err != nil {
 		return err
 	}
 
+	read := reader.NewReader(readAt)
+	file, err := excelize.OpenReader(read)
+	if err != nil {
+		return err
+	}
 	rows, err := file.GetRows("Sheet1")
 	if err != nil {
 		return err
 	}
-	chunkSize := 2500
 
 	for i := 0; i < len(rows); i += chunkSize {
 
@@ -48,33 +108,19 @@ func ReadExcel[T Indexer](esCli *elastic.Client, filepath string, docType T, ctx
 			end = len(rows)
 		}
 		chunk := rows[i:end]
-		bulk := esCli.Bulk().Index(docType.Index()).Retrier(elastic.NewBackoffRetrier(elastic.NewConstantBackoff(time.Second * 5))).Refresh("true")
-		for k, v := range chunk {
-			if i != 0 {
-				k = k + i
-			}
-			if k == 0 {
-				continue
-			}
-
-			doc, err := docType.GenDoc(k, v)
-			if err != nil {
-				log.Println(err)
-				break
-			}
-
-			req := elastic.NewBulkUpdateRequest().Id(doc.GetId()).Doc(doc).Upsert(doc)
-			bulk.Add(req)
-		}
-		res, err := bulk.Do(ctx)
+		wg.Add(1)
+		err := pool.Invoke(&TaskParams[T]{
+			esUrl:      esUrl,
+			esUser:     esUser,
+			esPassword: esPassword,
+			docType:    docType,
+			chunkStart: i,
+			rows:       chunk,
+		})
 		if err != nil {
 			return err
 		}
-		if len(res.Failed()) > 0 {
-			for _, v := range res.Failed() {
-				fmt.Println(v.Error.Reason, v.Id, v.Result)
-			}
-		}
 	}
+	wg.Wait()
 	return nil
 }
