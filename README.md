@@ -8,7 +8,7 @@ excel数据转存elasticsearch
 - [x] mmap open large file
 - [x] large file split chunk
 - [x] task pool
-- [x] elistic bulk 批量操作
+- [x] elastic bulk 批量操作
 - [x] auto gen doc
 - [ ] yaml config
 - [ ] 自定义mapping
