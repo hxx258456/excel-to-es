@@ -2,10 +2,12 @@ package esmodel
 
 import (
 	"excel-to-es/transfor"
+	"fmt"
 	"strconv"
 )
 
 type University struct {
+	ID             int     `json:"id"`              // id
 	Code           string  `json:"code"`            //编码
 	Name           string  `json:"name"`            //名字
 	Province       string  `json:"province"`        //省份
@@ -18,6 +20,7 @@ type University struct {
 	CompositeIndex float32 `json:"composite_index"` //排名
 	Heat           int     `json:"heat"`            // 热度
 	Description    string  `json:"description"`     // 简介
+	Logo           string  `json:"logo"`            // logo
 }
 
 func (University) Index() string {
@@ -92,34 +95,36 @@ func (University) Mapping() string {
 }
 
 func (University) GenDoc(k int, v []string) (transfor.Indexer, error) {
-	ranking, err := strconv.Atoi(v[8])
+	ranking, err := strconv.Atoi(v[9])
 	if err != nil {
 		return nil, err
 	}
-	compositeIndex, err := strconv.ParseFloat(v[9], 32)
+	compositeIndex, err := strconv.ParseFloat(v[10], 32)
 	if err != nil {
 		return nil, err
 	}
-	heat, err := strconv.Atoi(v[10])
+	heat, err := strconv.Atoi(v[11])
 	if err != nil {
 		return nil, err
 	}
 	return &University{
 		Code:           v[0],
+		ID:             k,
 		Name:           v[1],
-		Province:       v[2],
-		City:           v[3],
-		Category:       v[4],
-		Nature:         v[5],
-		Belong:         v[6],
-		Feature:        v[7],
+		Logo:           v[2],
+		Province:       v[3],
+		City:           v[4],
+		Category:       v[5],
+		Nature:         v[6],
+		Belong:         v[7],
+		Feature:        v[8],
 		Ranking:        ranking,
 		CompositeIndex: float32(compositeIndex),
 		Heat:           heat,
-		Description:    v[11],
+		Description:    v[12],
 	}, nil
 }
 
 func (u University) GetId() string {
-	return u.Code
+	return fmt.Sprintf("%d", u.ID)
 }

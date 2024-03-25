@@ -3,11 +3,11 @@ package transfor
 import (
 	"context"
 	"excel-to-es/reader"
+	"fmt"
 	"github.com/olivere/elastic/v7"
 	"github.com/panjf2000/ants/v2"
 	"github.com/xuri/excelize/v2"
 	"golang.org/x/exp/mmap"
-	"log"
 	"runtime"
 	"sync"
 	"time"
@@ -21,9 +21,7 @@ type Indexer interface {
 }
 
 type TaskParams[T Indexer] struct {
-	esUrl      string
-	esUser     string
-	esPassword string
+	esCli      *elastic.Client
 	docType    T
 	rows       [][]string
 	chunkStart int
@@ -35,22 +33,16 @@ func ReadExcel[T Indexer](esUrl, esUser, esPassword string, filepath string, doc
 
 		defer wg.Done()
 		param := i.(*TaskParams[T])
-		esCli, err := elastic.NewClient(elastic.SetBasicAuth(param.esUser, param.esPassword), elastic.SetURL(param.esUrl), elastic.SetSniff(false))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		bulk := esCli.Bulk().Index(param.docType.Index()).Retrier(elastic.NewBackoffRetrier(elastic.NewConstantBackoff(time.Second * 5))).Refresh("true")
+		bulk := param.esCli.Bulk().Index(param.docType.Index()).Retrier(elastic.NewBackoffRetrier(elastic.NewConstantBackoff(time.Second * 5))).Refresh("true")
 
 		for k, v := range param.rows {
 			if k == 0 {
 				continue
 			}
 			v := v
-			log.Println(k + param.chunkStart)
 			doc, err := param.docType.GenDoc(k+param.chunkStart, v)
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				break
 			}
 			req := elastic.NewBulkUpdateRequest().Id(doc.GetId()).Doc(doc).Upsert(doc)
@@ -58,14 +50,14 @@ func ReadExcel[T Indexer](esUrl, esUser, esPassword string, filepath string, doc
 		}
 		res, err := bulk.Do(ctx)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 		if len(res.Failed()) > 0 {
 			for _, v := range res.Failed() {
-				log.Println(v.Error.Reason, v.Id, v.Result)
+				fmt.Println(v.Error.Reason, v.Id, v.Result)
 			}
 		}
-	}, ants.WithPreAlloc(true))
+	}, ants.WithPreAlloc(false))
 	if err != nil {
 		return err
 	}
@@ -98,7 +90,6 @@ func ReadExcel[T Indexer](esUrl, esUser, esPassword string, filepath string, doc
 	if err != nil {
 		return err
 	}
-
 	for i := 0; i < len(rows); i += chunkSize {
 
 		end := i + chunkSize
@@ -110,9 +101,7 @@ func ReadExcel[T Indexer](esUrl, esUser, esPassword string, filepath string, doc
 		chunk := rows[i:end]
 		wg.Add(1)
 		err := pool.Invoke(&TaskParams[T]{
-			esUrl:      esUrl,
-			esUser:     esUser,
-			esPassword: esPassword,
+			esCli:      esCli,
 			docType:    docType,
 			chunkStart: i,
 			rows:       chunk,

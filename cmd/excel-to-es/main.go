@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"excel-to-es/esmodel"
+	"excel-to-es/old_transfor"
 	"excel-to-es/transfor"
+	"github.com/olivere/elastic/v7"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
 	"log"
@@ -25,7 +27,15 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch flagType {
 			case "university":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.University{}, flagChunkSize, context.Background()); err != nil {
+				//if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.University{}, flagChunkSize, context.Background()); err != nil {
+				//	return err
+				//}
+
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.University{}, flagChunkSize, context.Background()); err != nil {
 					return err
 				}
 			case "position":
