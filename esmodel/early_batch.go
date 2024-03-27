@@ -92,14 +92,8 @@ func (EarlyBatch) GenDoc(k int, v []string) (transfor.Indexer, error) {
 	if k == 0 {
 		return nil, fmt.Errorf("invalid k")
 	}
-	year, err := strconv.Atoi(v[0])
-	if err != nil {
-		return nil, err
-	}
-	provinceCode, err := strconv.Atoi(v[1])
-	if err != nil {
-		return nil, err
-	}
+	year, _ := strconv.Atoi(v[0])
+	provinceCode, _ := strconv.Atoi(v[1])
 	return EarlyBatch{
 		Id:                k,
 		Year:              year,

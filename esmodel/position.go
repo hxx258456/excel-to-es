@@ -75,34 +75,15 @@ func (Position) GenDoc(k int, v []string) (transfor.Indexer, error) {
 	if k == 0 {
 		return nil, errors.New("invalid k")
 	}
-	provinceCode, err := strconv.Atoi(v[0])
-	if err != nil {
-		return nil, err
-	}
-	year, err := strconv.Atoi(v[2])
-	if err != nil {
-		return nil, err
-	}
+	provinceCode, _ := strconv.Atoi(v[0])
+	year, _ := strconv.Atoi(v[2])
 
 	// 分数区间
-	scoreRangeLow, err := strconv.Atoi(v[5])
-	if err != nil {
-		return nil, err
-	}
-	scoreRangeHigh, err := strconv.Atoi(v[6])
-	if err != nil {
-		return nil, err
-	}
-
+	scoreRangeLow, _ := strconv.Atoi(v[5])
+	scoreRangeHigh, _ := strconv.Atoi(v[6])
 	// 位次区间
-	positionRangeHigh, err := strconv.Atoi(v[7])
-	if err != nil {
-		return nil, err
-	}
-	positionRangeLow, err := strconv.Atoi(v[8])
-	if err != nil {
-		return nil, err
-	}
+	positionRangeHigh, _ := strconv.Atoi(v[7])
+	positionRangeLow, _ := strconv.Atoi(v[8])
 
 	sameCount, err := strconv.Atoi(v[9])
 	if err != nil {

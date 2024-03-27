@@ -76,10 +76,7 @@ func (BatchLine) GenDoc(k int, v []string) (transfor.Indexer, error) {
 		v = append(v, "", "", "")
 	}
 	provinceCode, _ := strconv.Atoi(v[0])
-	year, err := strconv.Atoi(v[2])
-	if err != nil {
-		return nil, err
-	}
+	year, _ := strconv.Atoi(v[2])
 	score, _ := strconv.Atoi(v[6])
 	lingScore, _ := strconv.Atoi(v[7])
 	return BatchLine{

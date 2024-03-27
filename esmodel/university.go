@@ -2,13 +2,11 @@ package esmodel
 
 import (
 	"excel-to-es/transfor"
-	"fmt"
 	"strconv"
 )
 
 type University struct {
-	ID             int     `json:"id"`              // id
-	Code           string  `json:"code"`            //编码
+	Code           string  `json:"code"`            //编码唯一
 	Name           string  `json:"name"`            //名字
 	Province       string  `json:"province"`        //省份
 	City           string  `json:"city"`            //城市
@@ -18,9 +16,10 @@ type University struct {
 	Feature        string  `json:"feature"`         //特色
 	Ranking        int     `json:"ranking"`         //排名
 	CompositeIndex float32 `json:"composite_index"` //排名
-	Heat           int     `json:"heat"`            // 热度
-	Description    string  `json:"description"`     // 简介
-	Logo           string  `json:"logo"`            // logo
+	Heat           int     `json:"heat"`            //热度
+	Description    string  `json:"description"`     //简介
+	Logo           string  `json:"logo"`            //logo
+	Batch          string  `json:"batch"`           //批次
 }
 
 func (University) Index() string {
@@ -49,6 +48,9 @@ func (University) Mapping() string {
       "province": {
         "type": "keyword"
       },
+      "batch": {
+        "type": "keyword"
+	  },
       "city": {
         "type": "keyword"
       },
@@ -95,36 +97,27 @@ func (University) Mapping() string {
 }
 
 func (University) GenDoc(k int, v []string) (transfor.Indexer, error) {
-	ranking, err := strconv.Atoi(v[9])
-	if err != nil {
-		return nil, err
-	}
-	compositeIndex, err := strconv.ParseFloat(v[10], 32)
-	if err != nil {
-		return nil, err
-	}
-	heat, err := strconv.Atoi(v[11])
-	if err != nil {
-		return nil, err
-	}
+	ranking, _ := strconv.Atoi(v[10])
+	compositeIndex, _ := strconv.ParseFloat(v[11], 32)
+	heat, _ := strconv.Atoi(v[12])
 	return &University{
 		Code:           v[0],
-		ID:             k,
 		Name:           v[1],
 		Logo:           v[2],
-		Province:       v[3],
-		City:           v[4],
-		Category:       v[5],
-		Nature:         v[6],
-		Belong:         v[7],
-		Feature:        v[8],
+		Batch:          v[3],
+		Province:       v[4],
+		City:           v[5],
+		Category:       v[6],
+		Nature:         v[7],
+		Belong:         v[8],
+		Feature:        v[9],
 		Ranking:        ranking,
 		CompositeIndex: float32(compositeIndex),
 		Heat:           heat,
-		Description:    v[12],
+		Description:    v[13],
 	}, nil
 }
 
 func (u University) GetId() string {
-	return fmt.Sprintf("%d", u.ID)
+	return u.Code
 }

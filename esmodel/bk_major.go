@@ -6,13 +6,10 @@ import (
 )
 
 type BKMajor struct {
-	Id             int    `json:"id"`              //
-	Subject        string `json:"subject"`         // 学科
-	SubjectCode    string `json:"subject_code"`    // 学科编码
-	Discipline     string `json:"discipline"`      // 学类
-	DisciplineCode string `json:"discipline_code"` // 学类编码
-	Major          string `json:"major"`           // 专业
-	MajorCode      string `json:"major_code"`      // 专业编码
+	Id         int    `json:"id"`         //
+	Subject    string `json:"subject"`    // 学科
+	Discipline string `json:"discipline"` // 学类
+	Major      string `json:"major"`      // 专业
 }
 
 func (BKMajor) Index() string {
@@ -30,19 +27,10 @@ func (BKMajor) Mapping() string {
 	  "subject": {
 		"type": "keyword"
 	  },
-	  "subject_code": {
-		"type": "keyword"
-	  },
 	  "discipline": {
 		"type": "keyword"
 	  },
-	  "discipline_code": {
-		"type": "keyword"
-	  },
 	  "major": {
-		"type": "keyword"
-	  },
-	  "major_code": {
 		"type": "keyword"
 	  }
 	}
@@ -53,13 +41,10 @@ func (BKMajor) Mapping() string {
 
 func (BKMajor) GenDoc(k int, v []string) (transfor.Indexer, error) {
 	return &BKMajor{
-		Id:             k,
-		Subject:        v[0],
-		SubjectCode:    v[1],
-		Discipline:     v[2],
-		DisciplineCode: v[3],
-		Major:          v[4],
-		MajorCode:      v[5],
+		Id:         k,
+		Subject:    v[0],
+		Discipline: v[1],
+		Major:      v[2],
 	}, nil
 }
 

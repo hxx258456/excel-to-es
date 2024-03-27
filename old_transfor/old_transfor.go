@@ -2,16 +2,20 @@ package old_transfor
 
 import (
 	"context"
+	"excel-to-es/esmodel"
 	"excel-to-es/transfor"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/olivere/elastic/v7"
 	"github.com/xuri/excelize/v2"
 )
 
-func ReadExcel[T transfor.Indexer](esCli *elastic.Client, filepath string, docType T, chunkSize int, ctx context.Context) error {
+var UniversityMap = make(map[string]string)
+
+func ReadExcel[T transfor.Indexer](esCli *elastic.Client, filepath string, docType T, chunkSize int, flagReverse bool, flagOffset int, ctx context.Context) error {
 	exists, err := esCli.IndexExists(docType.Index()).Do(ctx)
 	if err != nil {
 		return err
@@ -50,6 +54,28 @@ func ReadExcel[T transfor.Indexer](esCli *elastic.Client, filepath string, docTy
 				continue
 			}
 
+			if flagReverse {
+				universityName := strings.Replace(v[1], " ", "", -1)
+				universityName = strings.Replace(universityName, "）", ")", -1)
+				universityName = strings.Replace(universityName, "（", "(", -1)
+				_, ok := UniversityMap[universityName]
+				if !ok {
+
+					res, err := esCli.Search().Index(esmodel.University{}.Index()).Query(elastic.NewTermQuery("name.keyword", universityName)).Do(ctx)
+					if err != nil {
+						log.Println(err)
+						return err
+					}
+					for _, v := range res.Hits.Hits {
+						UniversityMap[universityName] = v.Id
+					}
+				}
+				v[0] = UniversityMap[universityName]
+
+			}
+			if flagOffset > 0 {
+				k += flagOffset
+			}
 			doc, err := docType.GenDoc(k, v)
 			if err != nil {
 				log.Println(err)

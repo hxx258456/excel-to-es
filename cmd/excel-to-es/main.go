@@ -4,7 +4,6 @@ import (
 	"context"
 	"excel-to-es/esmodel"
 	"excel-to-es/old_transfor"
-	"excel-to-es/transfor"
 	"github.com/olivere/elastic/v7"
 	"github.com/spf13/cobra"
 	_ "go.uber.org/automaxprocs"
@@ -19,6 +18,8 @@ var (
 	flagFilePath   string
 	flagType       string
 	flagChunkSize  int
+	flagReverse    bool
+	flagOffset     int
 
 	rootCmd = &cobra.Command{
 		Use:   "excel-to-es",
@@ -35,31 +36,128 @@ var (
 				if err != nil {
 					return err
 				}
-				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.University{}, flagChunkSize, context.Background()); err != nil {
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.University{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "position":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.Position{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.Position{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "university_score_line":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.UniversityScoreLine{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.UniversityScoreLine{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "batch_line":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.BatchLine{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.BatchLine{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "early_batch":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.EarlyBatch{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.EarlyBatch{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "zk_major":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.ZKMajor{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.ZKMajor{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			case "bk_major":
-				if err := transfor.ReadExcel(flagEsUrl, flagEsUser, flagEsPassword, flagFilePath, esmodel.BKMajor{}, flagChunkSize, context.Background()); err != nil {
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.BKMajor{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "major_score_line":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.MajorScoreline{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "career_major_require":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerMajorRequire{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "career_needs":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerNeeds{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "c_c_r":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerCompanyRecruitment{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "c_pc_r":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerPCRecruitment{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "c_edu_r":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerEduRequire{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "c_ctype_c":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerCTypeCount{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+
+			case "c_company_count":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.CareerCompanyCount{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "career":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.Career{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
 			default:
@@ -108,4 +206,6 @@ func init() {
 	}
 
 	rootCmd.Flags().IntVarP(&flagChunkSize, "chunk", "c", 500, "文件切片大小")
+	rootCmd.Flags().BoolVarP(&flagReverse, "reverse", "r", false, "是否转义")
+	rootCmd.Flags().IntVarP(&flagOffset, "offset", "o", 0, "id偏移量")
 }
