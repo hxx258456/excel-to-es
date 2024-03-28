@@ -14,6 +14,7 @@ type Career struct {
 	ThreeLevelCareerCode string `json:"three_level_career_code"` // 三级职业编号
 	ThreeLevelCareerName string `json:"three_level_career_name"` // 三级职业名称
 	TwoLevelCareerDesc   string `json:"two_level_career_desc"`   // 二级职业描述
+	Ranking              int    `json:"ranking"`                 // 热度
 }
 
 func (c Career) GetId() string {
@@ -49,6 +50,9 @@ func (Career) Mapping() string {
       },
       "three_level_career_name": {
         "type": "keyword"
+      },
+      "ranking": {
+        "type": "integer"
       }
     }
   }

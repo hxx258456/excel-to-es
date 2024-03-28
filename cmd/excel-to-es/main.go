@@ -168,6 +168,22 @@ var (
 				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.Major{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
 					return err
 				}
+			case "university_major":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.UniversityMajor{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
+			case "enrollment":
+				esCli, err := elastic.NewClient(elastic.SetBasicAuth(flagEsUser, flagEsPassword), elastic.SetURL(flagEsUrl), elastic.SetSniff(false))
+				if err != nil {
+					return err
+				}
+				if err := old_transfor.ReadExcel(esCli, flagFilePath, esmodel.Enrollment{}, flagChunkSize, flagReverse, flagOffset, context.Background()); err != nil {
+					return err
+				}
 			default:
 				return nil
 			}

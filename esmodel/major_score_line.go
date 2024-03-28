@@ -9,7 +9,7 @@ import (
 
 type MajorScoreline struct {
 	ID                int    `json:"id"`                 //
-	UniversityId      int    `json:"university_id"`      //
+	UniversityId      string `json:"university_id"`      //
 	UniversityName    string `json:"university_name"`    // 大学名称
 	Year              int    `json:"year"`               // 年份
 	Province          string `json:"province"`           // 省份
@@ -36,7 +36,7 @@ func (MajorScoreline) Mapping() string {
         "type": "integer"
       },
       "university_id": {
-        "type": "integer"
+        "type": "keyword"
       },
       "university_name": {
         "type": "keyword"
@@ -97,7 +97,6 @@ func (MajorScoreline) GenDoc(k int, v []string) (transfor.Indexer, error) {
 		fill := make([]string, 12-(len(v)))
 		v = append(v, fill...)
 	}
-	universityId, _ := strconv.Atoi(v[0])
 	year, _ := strconv.Atoi(v[2])
 
 	avgScore, _ := strconv.Atoi(v[7])
@@ -107,7 +106,7 @@ func (MajorScoreline) GenDoc(k int, v []string) (transfor.Indexer, error) {
 
 	return &MajorScoreline{
 		ID:                k,
-		UniversityId:      universityId,
+		UniversityId:      v[0],
 		UniversityName:    v[1],
 		Year:              year,
 		Province:          v[3],
